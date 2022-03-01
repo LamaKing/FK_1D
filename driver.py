@@ -94,7 +94,7 @@ def drive():
     # Gnuplot-compatible (leading #) fix-width output file
     first = '#{i:0{ni}d}){s: <{n}}'.format(i=0, s='dt*it', ni=indlab_space, n=lab_space-1,c=' ')
     print(first+"".join(['{i:0{ni}d}){s: <{n}}'.format(i=il+1, s=lab, ni=indlab_space, n=lab_space,c=' ')
-                       for il, lab in zip(range(len(header_labels)), header_labels)]), file=outstream)
+                         for il, lab in zip(range(len(header_labels)), header_labels)]), file=outstream)
 
     # Inner-scope shortcut for printing
     def print_status(data):
