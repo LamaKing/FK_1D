@@ -41,6 +41,5 @@ vvec =  np.array(len(xvec)*[v0])
 mass = 1
 mvec = np.array(len(xvec)*[mass])
 
-
 fname = 'test.xyz'
 chain2ase(xvec, vvec, mvec).write(fname)
