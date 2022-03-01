@@ -57,7 +57,7 @@ gg_v = ase_read(traj_fname, index=':')
 trajall = np.array([x.positions[:,0] for x in gg_v])
 Np = trajall.shape[1]
 
-skip_steps = 20
+skip_steps = 10
 
 nsteps = trajall.shape[0]
 tvec = dt*np.array(range(nsteps))
@@ -104,7 +104,7 @@ if pltflag_v[1]:
         if ii % (nsteps/10) == 0:
             print(status_str % (ii,  ii*dt, ii/nstep*100))
         plt.scatter((trajall[ii,1:Np]+trajall[ii,0:Np-1])/2, (Np-1)*[tvec[ii]], c=bond_diff(trajall[ii]),
-                    marker='o', cmap='RdBu', norm=cnorm, ec='none', lw=0.1, s=8)
+                    marker='o', cmap='RdBu', norm=cnorm, ec='none', lw=0.1, s=5)
                     #marker='o', cmap='RdBu', norm=cnorm, ec='none', lw=0.1, s=0.8)
     cbar = plt.colorbar()
     cbar.ax.set_ylabel('Bond length')
@@ -133,7 +133,7 @@ if pltflag_v[2]:
         if ii % (Np/10) == 0:
             print(status_str % (ii, ii/Np*100))
         plt.scatter(trajall[::skip_steps,ii], tvec[::skip_steps], c=sub_en(trajall[::skip_steps,ii], params),
-                    cmap='magma_r', norm=cnorm, ec='none', lw=0.5, s=10)
+                    cmap='magma_r', norm=cnorm, ec='none', lw=0.5, s=5)
 
     cbar = plt.colorbar()
     cbar.ax.set_ylabel('$E_\mathrm{sub}$')
