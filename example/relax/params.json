@@ -1,0 +1,15 @@
+{
+    "eps" : 1,
+    "a_s" :0.98,
+    "K" : 20,
+    "F_ext" : 0,
+    "F_lhs" : 0,
+    "F_rhs" : 0,
+    "dt" :  0.025,
+    "fname": "start.xyz",
+    "nstep": 2000,
+    "Np": 50,
+    "a_c": 1,
+    "offset": 0.5,
+    "gamma": 1.813
+}
