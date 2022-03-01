@@ -1,7 +1,8 @@
 import json
 from time import time
-from numpy import pi, sqrt, cos, sin
 import numpy as np
+from numpy import pi, sqrt, cos, sin
+from numpy.random import normal
 from scipy.integrate import solve_ivp
 
 from ase import Atoms
@@ -33,7 +34,9 @@ def drive():
     F_ext, F_lhs, F_rhs = params['F_ext'], params['F_lhs'], params['F_rhs']
     Famp, alpha = eps*pi/a_s, 2*pi/a_s # Shortcuts for derivatives
     # Langevin
-    gamma = params['gamma']
+    gamma, T = params['gamma'], params['T']
+    brand = np.sqrt(2*T*gamma)
+    params['brand'] = brand
 
     dt = params['dt']
     nstep = params['nstep']
@@ -68,6 +71,7 @@ def drive():
 
     print("Dimensionless ratio k/ (2 U0 (pi/a_substrate)^2) =", g)
 
+    print("Temperature %.4g. kBT/E_sub=? kBT/E_spring=?" % T)
 
     # First half is position second half is velocity
     neq = len(eqvec)
@@ -90,7 +94,7 @@ def drive():
     num_space = 30 # Width printed numerical values
     indlab_space = 2 # Header index width
     lab_space = num_space-indlab_space-1 # Match width of printed number, including parenthesis
-    header_labels = ['sub_en', 'spring_en', 'pos_cm[0]', 'Vcm[0]']
+    header_labels = ['sub_en', 'spring_en', 'ekin', 'pos_cm[0]', 'Vcm[0]']
     # Gnuplot-compatible (leading #) fix-width output file
     first = '#{i:0{ni}d}){s: <{n}}'.format(i=0, s='dt*it', ni=indlab_space, n=lab_space-1,c=' ')
     print(first+"".join(['{i:0{ni}d}){s: <{n}}'.format(i=il+1, s=lab, ni=indlab_space, n=lab_space,c=' ')
@@ -103,35 +107,46 @@ def drive():
 
     # MD param
     t = 0
-    print_skip = 1
+    print_skip = 10
     # DO MD
-    status_str = "Step %5i t=%8.4g (%5.2f%%) xcm=%8.4g vcm=%8.4g"
+    status_str = "Step %5i t=%8.4g (%5.2f%%) xcm=%15.4g vcm=%15.4g etot=%12.5g"
     print('-'*30, 'Drive N=%i' % nstep, '-'*30)
     for it in range(0, nstep):
         eqvec = traj[-1]
-        sol = solve_ivp(derivs, [t, t+dt], eqvec, args=[params])
+
+        # !!!!!!! THIS DOES NOT WORK WITH FINITE TEMPERATURE !!!!!
+        # Need to write your own integration...
+        sol = solve_ivp(derivs, [t, t+dt], eqvec, args=[params],
+                        #method='Radau'
+                        #rtol=1e-1,
+                        #max_step=5
+                        )
+        # ... or can we add bath kick at each time?
+        noise = normal(0, 1, size=neq2) # Gaussian numbers
+        sol.y[neq2:, -1] += brand*noise
+        #print(sol)
         t += dt
 
         tvec.append(sol.t[-1])
         traj.append(sol.y[:, -1])
         xvec, vvec = sol.y[:neq2, -1], sol.y[neq2:, -1]
-        c_sub_en, c_spring_en = np.sum(sub_en(xvec, params)), np.sum(spring_en(xvec, params))
+        c_sub_en, c_spring_en, c_ekin = np.sum(sub_en(xvec, params)), np.sum(spring_en(xvec, params)), np.sum(1/2*vvec**2)
         xcm, vcm = np.average(xvec), np.average(vvec)
         cmtraj.append([xcm, vcm])
         suben_traj.append(c_sub_en)
         springen_traj.append(c_spring_en)
 
-
         # Print step results
         if it % print_skip == 0:
-            print_status([t, c_sub_en, c_spring_en, xcm, vcm])
+            print_status([t, c_sub_en, c_spring_en, c_ekin, xcm, vcm])
             c_ase = chain2ase(xvec, vvec, mvec)
             c_ase.positions[:,1] = sub_en(xvec, params) # Use y coord as substrate energy
             c_ase.positions[:,2] = np.concatenate(([0], spring_en(xvec, params))) # Use z coord as spring energy
             ase_traj.append(c_ase)
 
+        #print("nfev %10i" % sol.nfev, status_str % (it,  it*dt, it/nstep*100, np.average(sol.y[:neq2, -1]), np.average(sol.y[neq2:, -1])))
         if it % (nstep/10) == 0:
-            print(status_str % (it,  it*dt, it/nstep*100, np.average(sol.y[:neq2, -1]), np.average(sol.y[neq2:, -1])))
+            print(status_str % (it,  it*dt, it/nstep*100, np.average(sol.y[:neq2, -1]), np.average(sol.y[neq2:, -1]), c_sub_en+c_spring_en+c_ekin))
 
 
     ase_write(trajfname, ase_traj)

@@ -38,7 +38,6 @@ Famp, alpha = eps*pi/a_s, 2*pi/a_s # Shortcuts for derivatives
 gamma = params['gamma']
 
 dt = params['dt']
-nstep = params['nstep']
 
 pltflag_v = [0,0,0]
 for i, flg in enumerate(sys.argv[1:]):
@@ -55,11 +54,13 @@ print("Load trajectory at file %s" % traj_fname)
 gg_v = ase_read(traj_fname, index=':')
 
 trajall = np.array([x.positions[:,0] for x in gg_v])
+print("time x particles", trajall.shape)
 Np = trajall.shape[1]
 
 skip_steps = 10
 
 nsteps = trajall.shape[0]
+# Missing the skip param!
 tvec = dt*np.array(range(nsteps))
 
 #----------------------------------------------------------------------------------------------
@@ -92,7 +93,8 @@ if pltflag_v[1]:
         return diff_vec
 
     bd_max = -1e30
-    for ii in range(nstep):
+    print(nsteps, trajall.shape)
+    for ii in range(nsteps):
         cmax = max(np.abs(bond_diff(trajall[ii])))
         if cmax > bd_max: bd_max = cmax
     print("Largest deviation from equilibrium max(|l-l0|/l0)=", bd_max)
@@ -102,7 +104,7 @@ if pltflag_v[1]:
     status_str = "Step %5i t=%8.4g (%5.2f%%)"
     for ii in range(0, nsteps, skip_steps):
         if ii % (nsteps/10) == 0:
-            print(status_str % (ii,  ii*dt, ii/nstep*100))
+            print(status_str % (ii,  ii*dt, ii/nsteps*100))
         plt.scatter((trajall[ii,1:Np]+trajall[ii,0:Np-1])/2, (Np-1)*[tvec[ii]], c=bond_diff(trajall[ii]),
                     marker='o', cmap='RdBu', norm=cnorm, ec='none', lw=0.1, s=5)
                     #marker='o', cmap='RdBu', norm=cnorm, ec='none', lw=0.1, s=0.8)
@@ -125,8 +127,6 @@ if pltflag_v[1]:
 if pltflag_v[2]:
     print("Substrate potential")
     cnorm = Normalize(-eps, 0)
-    nsteps = trajall.shape[0]
-    tvec = dt*np.array(range(nsteps))
     status_str = "Step %5i (%5.2f%%)"
 
     for ii in range(0, Np):
