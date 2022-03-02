@@ -12,19 +12,18 @@ from ase.io import write as ase_write
 from FK_1D import derivs, sub_en, spring_en
 from create_chain import ase2chain, chain2ase
 
-def drive():
+def drive(params):
 
     # Start the clock
     t0=time()
 
-    # Read params
-    params_fname = 'params.json'
-    with open(params_fname, 'r') as inj:
-        params = json.load(inj)
-
     print("Params file")
     for k, v in params.items():
         print("%20s :" % k, v)
+
+    name=''
+    if 'name' in params.keys():
+        name = params['name']
 
     # Substrate
     eps, a_s = params['eps'], params['a_s']
@@ -59,8 +58,6 @@ def drive():
     # Spring scale
     w0 = sqrt(K) # mass=1
     gamma0c = 2*w0
-    # Langeving thermostat
-    #gamma = 0.2*gammasc
 
     print('Lat sub %.4g lat col %.4g. Mismatch a_sub/a_chain=%.4g Np=%i' % (a_s, a_c, a_s/a_c, Np))
     print("Approx natural frequncy of chain w0=%.4g and critical damping gamma0c=%.4g" % (ws, gammasc))
@@ -86,8 +83,8 @@ def drive():
     ase_traj = []
 
     #-------- OUTPUT SETUP -----------
-    trajfname = 'traj.xyz'
-    outfname = 'out.dat'
+    trajfname = 'traj%s.xyz' % name
+    outfname = 'out%s.dat' % name
     outstream = open(outfname, 'w')
 
     # !! Labels and print_status data structures must be coherent !!
@@ -114,17 +111,11 @@ def drive():
     for it in range(0, nstep):
         eqvec = traj[-1]
 
-        # !!!!!!! THIS DOES NOT WORK WITH FINITE TEMPERATURE !!!!!
-        # Need to write your own integration...
-        sol = solve_ivp(derivs, [t, t+dt], eqvec, args=[params],
-                        #method='Radau'
-                        #rtol=1e-1,
-                        #max_step=5
-                        )
-        # ... or can we add bath kick at each time?
+        # Solve equations with RK45 see Scipy doc
+        sol = solve_ivp(derivs, [t, t+dt], eqvec, args=[params])
+        # Can we add bath kick at each time, after solving the equation?
         noise = normal(0, 1, size=neq2) # Gaussian numbers
-        sol.y[neq2:, -1] += brand*noise
-        #print(sol)
+        sol.y[neq2:, -1] += brand*noise # Add noise to velocities
         t += dt
 
         tvec.append(sol.t[-1])
@@ -144,10 +135,19 @@ def drive():
             c_ase.positions[:,2] = np.concatenate(([0], spring_en(xvec, params))) # Use z coord as spring energy
             ase_traj.append(c_ase)
 
-        #print("nfev %10i" % sol.nfev, status_str % (it,  it*dt, it/nstep*100, np.average(sol.y[:neq2, -1]), np.average(sol.y[neq2:, -1])))
         if it % (nstep/10) == 0:
             print(status_str % (it,  it*dt, it/nstep*100, np.average(sol.y[:neq2, -1]), np.average(sol.y[neq2:, -1]), c_sub_en+c_spring_en+c_ekin))
 
+    print(status_str % (it,  it*dt, it/nstep*100,
+                        np.average(sol.y[:neq2, -1]),
+                        np.average(sol.y[neq2:, -1]),
+                        c_sub_en+c_spring_en+c_ekin))
+
+    print_status([t, c_sub_en, c_spring_en, c_ekin, xcm, vcm])
+    c_ase = chain2ase(xvec, vvec, mvec)
+    c_ase.positions[:,1] = sub_en(xvec, params) # Use y coord as substrate energy
+    c_ase.positions[:,2] = np.concatenate(([0], spring_en(xvec, params))) # Use z coord as spring energy
+    ase_traj.append(c_ase)
 
     ase_write(trajfname, ase_traj)
 
@@ -157,10 +157,14 @@ def drive():
     #suben_traj = np.array(suben_traj)
     #springen_traj = np.array(springen_traj)
 
-    np.savetxt('traj.dat', traj)
+    np.savetxt('traj%s.dat' % name, traj)
 
     t1=time()
     print('Done in %is (%.2fmin)' % (t1-t0, (t1-t0)/60))
 
 if __name__ == "__main__":
-    drive()
+    # Read params
+    params_fname = 'params.json'
+    with open(params_fname, 'r') as inj:
+        params = json.load(inj)
+    drive(params)
