@@ -21,25 +21,27 @@ def ase2chain(ase_chain):
 
     return xvec, vvec, mvec
 
-params_fname = 'params.json'
-with open(params_fname, 'r') as inj:
-    params = json.load(inj)
+if __name__ == '__main__':
+    params_fname = 'params.json'
+    with open(params_fname, 'r') as inj:
+        params = json.load(inj)
 
-Np = params['Np'] # Number of atoms
-a_c = params['a_c'] # Spacing
+    Np = params['Np'] # Number of atoms
+    a_c = params['a_c'] # Spacing
 
-offset =  params['offset'] # Offset for chain
+    offset =  params['offset'] # Offset for chain
 
-# Position
-xvec = offset + a_c*np.array(range(-int(Np/2), int(Np/2)))
+    # Position
+    xvec = offset + a_c*np.array(range(-int(Np/2), int(Np/2)))
 
-# Velocities
-v0 = 0
-vvec =  np.array(len(xvec)*[v0])
+    # Velocities
+    v0 = 0
+    vvec =  np.array(len(xvec)*[v0])
 
-# Masses
-mass = 1
-mvec = np.array(len(xvec)*[mass])
+    # Masses
+    mass = 1
+    mvec = np.array(len(xvec)*[mass])
 
-fname = 'test.xyz'
-chain2ase(xvec, vvec, mvec).write(fname)
+
+    fname = 'chain.xyz'
+    chain2ase(xvec, vvec, mvec).write(fname)
