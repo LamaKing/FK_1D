@@ -6,11 +6,12 @@
     "F_lhs" : 0,
     "F_rhs" : 0,
     "dt" :  0.005,
-    "fname": "chain.xyz",
-    "nstep": 5000,
+    "fname": "start.xyz",
+    "nstep": 10000,
     "Np": 50,
     "a_c": 1,
-    "offset": 0.5,
+    "BC_flag": 1,
+    "offset": 0.0,
     "gamma": 1.813,
-    "T": 0.001
+    "T": 0.000
 }
