@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from driver import drive
 import os, shutil, json
 from os.path import join as pjoin
@@ -34,7 +35,7 @@ def deping_ramp(F0, F1, Fstep, update_config=True):
 
         for cfname in move_fname:
             shutil.move(pjoin(pwd, cfname), pjoin(pwd, cdir, cfname))   
-        cfname = 'relax.xyz'
+        cfname = params['fname'] 
         shutil.copy(pjoin(pwd, cfname), pjoin(pwd, cdir, cfname))
 
         params['F_ext'] = float(params['F_ext'])
@@ -43,8 +44,8 @@ def deping_ramp(F0, F1, Fstep, update_config=True):
             json.dump(params, outj)
 
         if update_config:
-            ase_read(pjoin(pwd, cdir, 'traj.xyz'), index=-1).write('relax.xyz')
-
+            ase_read(pjoin(pwd, cdir, 'traj.xyz'), index=-1).write('start.xyz')
+            params['fname'] = 'start.xyz'
         print('-' * 80, '\n')
 
     t1=time()

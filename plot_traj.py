@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import json, sys
 from time import time
 from numpy import pi, sqrt, cos, sin

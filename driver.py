@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import json
 from time import time
 import numpy as np
@@ -11,6 +12,9 @@ from ase.io import write as ase_write
 
 from FK_1D import derivs, sub_en, spring_en
 from create_chain import ase2chain, chain2ase
+
+# Nope in python they are only global to the module, not imported...
+#global eps, a_s, K, a_c, F_ex, F_lhs, F_rhs, Fam, alpha, gamma, T, brand, BC, dt
 
 def drive(params):
 
@@ -36,6 +40,9 @@ def drive(params):
     gamma, T = params['gamma'], params['T']
     brand = np.sqrt(2*T*gamma)
     params['brand'] = brand
+    # Boundary conditions
+    BC = int(params['BC_flag'])
+    if BC not in [0,1]: raise ValueError("Boundary condition must be 0 for OBC or 1 for PBC not %s" % str(BC))
 
     dt = params['dt']
     nstep = params['nstep']
