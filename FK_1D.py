@@ -14,21 +14,21 @@ def derivs(t, y, params): # here is all the physics: the left side of the equati
     neq=len(y)
     nhalf=int(neq/2)
     deriv=[0.]*neq  # just to initialize the new array
-    #noise = normal(0, 1, size=nhalf) # Gaussian numbers
 
     for i in range(nhalf):  # the second half of y is velocities
         deriv[i]=y[i+nhalf] # this enables the mapping of Newton to 1st order
 
     for i in range(1,nhalf-1):
-        deriv[i+nhalf]= F_ext - Famp*np.sin(alpha*y[i]) + K*(y[i+1]+y[i-1]-2*y[i]) - gamma*deriv[i]  #+ brand*noise[i]
+        deriv[i+nhalf]= F_ext - Famp*np.sin(alpha*y[i]) + K*(y[i+1]+y[i-1]-2*y[i]) - gamma*deriv[i]
 
     # OBC
     # First particle
     i=0
-    deriv[i+nhalf]= F_lhs + F_ext - Famp*np.sin(alpha*y[i]) + K*(y[i+1]-y[i]-a_c) - gamma*deriv[i] #+ brand*noise[i]
+    deriv[i+nhalf]= F_lhs + F_ext - Famp*np.sin(alpha*y[i]) + K*(y[i+1]-y[i]-a_c) - gamma*deriv[i]
     # Last particle
     i=nhalf-1
-    deriv[i+nhalf]= F_rhs + F_ext - Famp*np.sin(alpha*y[i]) - K*(y[i]-y[i-1]-a_c) - gamma*deriv[i] #+ brand*noise[i]
+#    deriv[i+nhalf]= F_rhs + F_ext - Famp*np.sin(alpha*y[i]) - K*(y[i]-y[i-1]-a_c) - gamma*deriv[i]
+    deriv[i+nhalf]= F_rhs + F_ext - Famp*np.sin(alpha*y[i]) + K*(y[i-1]-y[i]+a_c) - gamma*deriv[i]
 
     return deriv
 
