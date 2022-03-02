@@ -54,6 +54,11 @@ print("Load trajectory at file %s" % traj_fname)
 gg_v = ase_read(traj_fname, index=':')
 
 trajall = np.array([x.positions[:,0] for x in gg_v])
+
+trajcm = np.mean(trajall, axis=1)
+trajcm = trajcm[0]*np.ones(trajall.shape[0])
+#trajcm = np.zeros(trajall.shape[0])
+
 print("time x particles", trajall.shape)
 Np = trajall.shape[1]
 
@@ -67,12 +72,12 @@ tvec = dt*np.array(range(nsteps))
 # SIMPLE TRAJECTORY
 if pltflag_v[0]:
     print("Simple trajectory")
-    plt.plot(trajall[::skip_steps,:], tvec[::skip_steps])
+    plt.plot(trajall[::skip_steps,:]-trajcm[::skip_steps,np.newaxis], tvec[::skip_steps])
 
     plt.vlines(a_s*np.array(range(-int(1.2*a_c/a_s*Np),int(1.2*a_c/a_s*Np))), *plt.ylim(),
                color='gray', ls=':', lw=0.5)
 
-    plt.xlim([min(trajall.flatten())-5*a_s, max(trajall.flatten())+5*a_s])
+#    plt.xlim([min(trajall.flatten())-5*a_s, max(trajall.flatten())+5*a_s])
     plt.xlabel('$x_i$')
     plt.ylabel('$t$')
 
@@ -105,7 +110,7 @@ if pltflag_v[1]:
     for ii in range(0, nsteps, skip_steps):
         if ii % (nsteps/10) == 0:
             print(status_str % (ii,  ii*dt, ii/nsteps*100))
-        plt.scatter((trajall[ii,1:Np]+trajall[ii,0:Np-1])/2, (Np-1)*[tvec[ii]], c=bond_diff(trajall[ii]),
+        plt.scatter((trajall[ii,1:Np]+trajall[ii,0:Np-1])/2-trajcm[ii], (Np-1)*[tvec[ii]], c=bond_diff(trajall[ii]),
                     marker='o', cmap='RdBu', norm=cnorm, ec='none', lw=0.1, s=5)
                     #marker='o', cmap='RdBu', norm=cnorm, ec='none', lw=0.1, s=0.8)
     cbar = plt.colorbar()
@@ -115,7 +120,7 @@ if pltflag_v[1]:
                color='gray', ls=':', lw=0.5)
     plt.ylim([0,tvec[-1]])
     #plt.xlim([-30,30])
-    plt.xlim([min(trajall.flatten())-5*a_s, max(trajall.flatten())+5*a_s])
+    #plt.xlim([min(trajall.flatten())-5*a_s, max(trajall.flatten())+5*a_s])
 
     plt.xlabel('$x_i$')
     plt.ylabel('$t$')
@@ -132,7 +137,7 @@ if pltflag_v[2]:
     for ii in range(0, Np):
         if ii % (Np/10) == 0:
             print(status_str % (ii, ii/Np*100))
-        plt.scatter(trajall[::skip_steps,ii], tvec[::skip_steps], c=sub_en(trajall[::skip_steps,ii], params),
+        plt.scatter(trajall[::skip_steps,ii]-trajcm[::skip_steps], tvec[::skip_steps], c=sub_en(trajall[::skip_steps,ii], params),
                     cmap='magma_r', norm=cnorm, ec='none', lw=0.5, s=5)
 
     cbar = plt.colorbar()
@@ -142,7 +147,7 @@ if pltflag_v[2]:
                color='gray', ls=':', lw=0.5)
     plt.ylim([0,tvec[-1]])
     #plt.xlim([-30,30])
-    plt.xlim([min(trajall.flatten())-5*a_s, max(trajall.flatten())+5*a_s])
+    #plt.xlim([min(trajall.flatten())-5*a_s, max(trajall.flatten())+5*a_s])
 
     plt.xlabel('$x_i$')
     plt.ylabel('$t$')
