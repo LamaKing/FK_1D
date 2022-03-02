@@ -1,6 +1,6 @@
 # Frenkel-Kontorova model 1D
 
-Implementation with all same masses, OBC, not much care about details.
+Implementation with all same masses, OBC/PBC with flag, not much care about details.
 
 ### Files:
 - FK_1D derivatives defining the model. And simple functions to
