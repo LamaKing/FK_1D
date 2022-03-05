@@ -29,14 +29,16 @@ if __name__ == '__main__':
 
     Np = params['Np'] # Number of atoms
     a_c = params['a_c'] # Spacing
-
+    L = Np*a_c
     offset =  params['offset'] # Offset for chain
 
-    # Position
-    xvec = offset + a_c*np.array(range(-int(Np/2), int(Np/2)))
+    print("Create chain of N=%i atoms with spacing %.8g (L=%.4g). Offset to CM=%.4g" % (Np, a_c, L, offset))
 
+    # Position
+    xvec = a_c*np.array(range(Np))
+    xvec = xvec + offset - np.mean(xvec)
     # Velocities
-    v0 = 0
+    v0 = 0.0
     vvec =  np.array(len(xvec)*[v0])
 
     # Masses
@@ -45,4 +47,5 @@ if __name__ == '__main__':
 
 
     fname = 'chain.xyz'
+    print("Save to %s" % fname)
     chain2ase(xvec, vvec, mvec).write(fname)
