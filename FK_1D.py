@@ -3,7 +3,7 @@ from numpy import pi
 from numpy.random import normal
 
 global t_eps
-t_eps = 1 # Turn off the substrate potential for debug purposes
+t_eps = 1 # Set to 0: turn off the substrate potential for debug purposes
 
 def derivs(t, y, params): # here is all the physics: the left side of the equation
 
@@ -15,7 +15,7 @@ def derivs(t, y, params): # here is all the physics: the left side of the equati
 
     # Initialise arrays
     neq = len(y)
-    neq2 = int(neq/2)
+    neq2 = int(neq/2) # = Number of particles
     deriv = np.zeros(neq)  # the accelleration array
     noise = normal(0, 1, size=neq2) # Gaussian numbers
 
