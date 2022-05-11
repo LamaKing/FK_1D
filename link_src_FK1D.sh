@@ -1,6 +1,6 @@
 #!/bin/bash
 src_fld=$HOME/Documents/Post_doc-SISSA/heat_ring/MD_code/
-src_fname=(  FK_1D.py create_chain.py driver.py RK45_lang.py )
+src_fname=(  FK_1D.py create_chain.py driver.py RK45_lang.py plot_traj.py )
 
 force_opt=""
 if [[ $1 == "f" ]]

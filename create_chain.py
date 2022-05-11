@@ -36,7 +36,9 @@ if __name__ == '__main__':
 
     # Position
     xvec = a_c*np.array(range(Np))
-    xvec = xvec + offset - np.mean(xvec)
+#    print(Np*a_c, xvec)
+#    xvec = xvec + offset - np.mean(xvec)
+#    print(xvec)
     # Velocities
     v0 = 0.0
     vvec =  np.array(len(xvec)*[v0])

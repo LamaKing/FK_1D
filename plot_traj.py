@@ -54,6 +54,7 @@ if len(sys.argv) > 4:
     traj_fname = sys.argv[4]
 print("Load trajectory at file %s" % traj_fname)
 gg_v = ase_read(traj_fname, index=':')
+print("Trajectory of %i frames" % len(gg_v))
 
 trajall = np.array([x.positions[:,0] for x in gg_v])
 
