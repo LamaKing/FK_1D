@@ -33,7 +33,8 @@ def drive(params):
     # Load sys
     ase_chain = ase_read(params['fname'])
     xvec, vvec, mvec = ase2chain(ase_chain) # We read the vector mass but then we ignore it, all the same
-    m, Np = mvec[0], len(xvec)
+    #m, Np = mvec[0], len(xvec)
+    Np = len(xvec)
     print("Loaded %s:" % (params['fname']), ase_chain)
     if Np == 1: raise ValueError('Sorry, need at least two particle to connect springs')
     # MD integration params
@@ -60,19 +61,21 @@ def drive(params):
     #li0, li1 = params['li0'], params['li1']
 
     # ------------------- SYSTEM ARRAYS -------------------- #
-    # Setup particle-wise Langevin
+    corr = np.sqrt(4/3.) # 1 # !!! AMPLITUDE NUMBERS CORRECTION. Without this the temperature is wrong for some reason... RK45 requires 3/4 dt?
+    # Setup 2-particle-types Langevin
     gammav = gamma*np.ones(Np)
-    brand = np.sqrt(2*T*m*gamma/dt)
+    brand = corr*np.sqrt(2*T*gamma/dt)
     brandv = brand*np.ones(Np)
 
-    brand0 = np.sqrt(2*T0*m*gamma0/dt)
+    brand0 = corr*np.sqrt(2*T0*gamma0/dt)
     gammav[:li0] = gamma0
     gammav[Np-li0:] = gamma0
     brandv[:li0] = brand0
     brandv[Np-li0:] = brand0
 
     Nmid = int(Np/2)
-    brand1 = np.sqrt(2*T1*m*gamma0/dt)
+    if 'Nmid' in params.keys(): Nmid = params['Nmid']
+    brand1 = corr*np.sqrt(2*T1*gamma1/dt)
     gammav[Nmid-li1:Nmid+li1] = gamma1
     brandv[Nmid-li1:Nmid+li1] = brand1
 
@@ -104,7 +107,7 @@ def drive(params):
     wc, gamma_cc  = sqrt(g), 2*sqrt(g)
     header = ' SYSTEM INFO '
     print('-'*20 + header + '-'*20)
-    print('Chain: N=%i a_c=%.4g g=%.4g m=%.4g' % (Np, a_c, g, m))
+    print('Chain: N=%i a_c=%.4g g=%.4g' % (Np, a_c, g))
     print('Sub: a_s=%.4g eps=%.4g' % (a_s, eps))
     print('Damping: gamma=%.4g (gamma/gamma_sc=%.4g gamma/gamma_cc=%.4g)' % (gamma, gamma/gamma_sc, gamma/gamma_cc))
     print('Temperature: T=%.4g rand amp=%.4g' % (T, brand))
@@ -162,14 +165,6 @@ def drive(params):
         eqvec = solver.y
         t = solver.t
 
-        # Print status update
-        if it % int(nstep/nskip/10) == 0:
-            xvec, vvec = eqvec[:neq2], eqvec[neq2:]
-            c_sub_en, c_spring_en, c_ekin = np.sum(sub_en(xvec)), np.sum(spring_en(xvec, g, a_c, BC)), np.sum(1/2*vvec**2)
-            c_kBT = 2*c_ekin/Np
-            xcm, vcm = np.average(xvec), np.average(vvec)
-            print(status_str % (it, t, t/tf*100, xcm, xcm/2/pi, vcm , c_kBT, c_sub_en+c_spring_en+c_ekin))
-
         # Save results
         xvec, vvec = eqvec[:neq2], eqvec[neq2:]
         c_sub_en, c_spring_en, c_ekin = np.sum(sub_en(xvec)), np.sum(spring_en(xvec, g, a_c, BC)), np.sum(1/2*vvec**2)
@@ -182,6 +177,14 @@ def drive(params):
         c_ase.positions[:,1] = sub_en(xvec) # Use y coord as substrate energy
         c_ase.positions[:,2] = spring_en(xvec, g, a_c, BC) # Use z coord as spring energy
         ase_write(trajfname, c_ase, append=True) # XYZ should be able to do append, careful if you change it!
+
+        # Print status update
+        if it % int(nstep/nskip/10) == 0:
+            #xvec, vvec = eqvec[:neq2], eqvec[neq2:]
+            #c_sub_en, c_spring_en, c_ekin = np.sum(sub_en(xvec)), np.sum(spring_en(xvec, g, a_c, BC)), np.sum(1/2*vvec**2)
+            #c_kBT = 2*c_ekin/Np
+            #xcm, vcm = np.average(xvec), np.average(vvec)
+            print(status_str % (it, t, t/tf*100, xcm, xcm/2/pi, vcm , c_kBT, c_sub_en+c_spring_en+c_ekin))
 
         it+=1
     #-------------------------------------------------------
