@@ -11,7 +11,7 @@ from ase.io import read as ase_read
 
 def loop_F(F0, F1, Fstep, update_config=True):
     t0 = time()
-    
+
     # update_config = True # Use last config of a run as start of the next
 
     # Read params
@@ -35,14 +35,14 @@ def loop_F(F0, F1, Fstep, update_config=True):
         os.makedirs(cdir, exist_ok=True)
 
         for cfname in move_fname:
-            shutil.move(pjoin(pwd, cfname), pjoin(pwd, cdir, cfname))   
-        cfname = params['fname'] 
+            shutil.move(pjoin(pwd, cfname), pjoin(pwd, cdir, cfname))
+        cfname = params['fname']
         shutil.copy(pjoin(pwd, cfname), pjoin(pwd, cdir, cfname))
 
         params['F_ext'] = float(params['F_ext'])
         #params['brand'] = float(params['brand'])
         with open(pjoin(pwd, cdir, 'params.json'), 'w') as outj:
-            json.dump(params, outj)
+            json.dump(params, outj, indent=4)
 
         if update_config:
             ase_read(pjoin(pwd, cdir, 'traj.xyz'), index=-1).write('start.xyz')
@@ -55,4 +55,3 @@ if __name__ == "__main__":
     F0, F1, Fstep = float(sys.argv[1]), float(sys.argv[2]), float(sys.argv[3])
     update_config = True
     deping_ramp(F0, F1, Fstep, update_config)
-    
