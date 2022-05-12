@@ -8,9 +8,11 @@ t_eps = 1 # Set to 0: turn off the substrate potential for debug purposes
 def derivs(t, y, params): # here is all the physics: the left side of the equation
 
     # This assignment is a bit stupid and time-wasting, these should be global variables.
-    g, a_c = params['g'], params['a_c'] # Coupling and chain spacing
+    #g, a_c = params['g'], params['a_c'] # Coupling and chain spacing
+    a_c = params['a_c'] # chain spacing
     F_ext, F_lhs, F_rhs = params['F_ext'], params['F_lhs'], params['F_rhs']
     gammav, brandv = params['gammav'], params['brandv'] # Gamma and brand t are vector, for thermal gradient
+    gv = params['gv'] # atom-wise coupling, i.e. atom-wise spring.
     BC = params['BC'] # 1 for PBC 0 for OBC
 
     # Initialise arrays
@@ -28,19 +30,19 @@ def derivs(t, y, params): # here is all the physics: the left side of the equati
     #------- Chain bulk
     for i in range(1, neq2-1):
         deriv[i+neq2] = F_ext - t_eps*np.sin(y[i]) - gammav[i]*y[i+neq2] + brandv[i]*noise[i] \
-            + g*(y[i+1] + y[i-1] - 2*y[i])
-    #print(deriv)
+            + gv[i]*(y[i+1] + y[i-1] - 2*y[i])
+        #print(deriv)
     #------- Bboundary conditions
     PBC_term = y[neq2-1] - y[0] - (neq2-1)*a_c
     #------------ First particle
     i=0
     deriv[i+neq2] = F_ext - t_eps*np.sin(y[i]) - gammav[i]*y[i+neq2] + brandv[i]*noise[i] \
-        + g*(y[i+1] - y[i] - a_c + BC*PBC_term) + F_lhs
+        + gv[i]*(y[i+1] - y[i] - a_c + BC*PBC_term) + F_lhs
     #print(deriv)
     #------------ Last particle
     i=neq2-1
     deriv[i+neq2] = F_ext - t_eps*np.sin(y[i]) - gammav[i]*y[i+neq2] + brandv[i]*noise[i] \
-        - g*(y[i] - y[i-1] - a_c + BC*PBC_term) + F_rhs
+        - gv[i]*(y[i] - y[i-1] - a_c + BC*PBC_term) + F_rhs
     #print(deriv)
     #print('='*30)
     return deriv
@@ -48,9 +50,10 @@ def derivs(t, y, params): # here is all the physics: the left side of the equati
 def sub_en(y):
     return t_eps*(1-np.cos(y))
 
-def spring_en(y, g, a_c, BC):
+def spring_en(y, g, a_c, BC, params):
+    gv = params['gv']
     Np = len(y)
-    en = [g/2*(y[i+1]-y[i]-a_c)**2 for i in range(0,Np-1)]
+    en = [gv[i]/2*(y[i+1]-y[i]-a_c)**2 for i in range(0,Np-1)]
     # If in PBC add last connection, otherwise 0 (keep array Np-long)
-    en += [BC*g/2*(y[0]+(Np-1)*a_c-y[Np-1])**2]
+    en += [BC*gv[Np-1]/2*(y[0]+(Np-1)*a_c-y[Np-1])**2]
     return np.array(en)

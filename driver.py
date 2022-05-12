@@ -43,9 +43,14 @@ def drive(params):
     nskip = params['nskip']
 
     # Substrate
-    a_s, eps = 2*pi, 2
+    a_s = 2*pi
     # Chain
     g, a_c = params['g'], params['a_c']
+    # Atom-wise g (see AV/NM project)
+    gv = g*np.ones(Np) # trivial to start
+    # gv[int(Np/2)-10:int(Np/2)+10] = 10 # Test with harder part in the middle
+    params['gv'] = gv
+    print(gv)
 
     # External Drivers
     F_ext, F_lhs, F_rhs = params['F_ext'], params['F_lhs'], params['F_rhs']
@@ -88,9 +93,9 @@ def drive(params):
     #print(brandv)
 
     # Parameters for the FK solver (save to json)
-    dparams = {'a_c': a_c, 'g': g,
+    dparams = {'a_c': a_c,
                'F_ext': F_ext, 'F_lhs': F_lhs, 'F_rhs': F_rhs,
-               'brandv': list(brandv), 'gammav': list(gammav),
+               'brandv': list(brandv), 'gammav': list(gammav), 'gv': list(gv),
                'BC': BC
                }
     with open('dparam.json', 'w') as outj: json.dump(dparams, outj)
@@ -108,7 +113,7 @@ def drive(params):
     header = ' SYSTEM INFO '
     print('-'*20 + header + '-'*20)
     print('Chain: N=%i a_c=%.4g g=%.4g' % (Np, a_c, g))
-    print('Sub: a_s=%.4g eps=%.4g' % (a_s, eps))
+    print('Sub: a_s=%.4g' % a_s)
     print('Damping: gamma=%.4g (gamma/gamma_sc=%.4g gamma/gamma_cc=%.4g)' % (gamma, gamma/gamma_sc, gamma/gamma_cc))
     print('Temperature: T=%.4g rand amp=%.4g' % (T, brand))
     print('F_ext=%.4g F_lhs=%.4g F_rhs=%.4g' % (F_ext, F_lhs, F_rhs))
@@ -141,7 +146,7 @@ def drive(params):
     t, tf = 0, dt*nstep
     it = 0
     # Save first step
-    c_sub_en, c_spring_en, c_ekin = np.sum(sub_en(xvec)), np.sum(spring_en(xvec, g, a_c, BC)), np.sum(1/2*vvec**2)
+    c_sub_en, c_spring_en, c_ekin = np.sum(sub_en(xvec)), np.sum(spring_en(xvec, g, a_c, BC, dparams)), np.sum(1/2*vvec**2)
     c_kBT = 2*c_ekin/Np
     xcm, vcm = np.average(xvec), np.average(vvec)
 
@@ -150,7 +155,7 @@ def drive(params):
 
     c_ase = chain2ase(xvec, vvec, mvec)
     c_ase.positions[:,1] = sub_en(xvec) # Use y coord as substrate energy
-    c_ase.positions[:,2] = spring_en(xvec, g, a_c, BC) # Use z coord as spring energy
+    c_ase.positions[:,2] = spring_en(xvec, g, a_c, BC, dparams) # Use z coord as spring energy
     ase_write(trajfname, c_ase, append=True) # XYZ should be able to do append, careful if you change it!
 
     # Solve equations with RK45 FIX STEP for Langevin. See module here and SciPy.
@@ -167,7 +172,7 @@ def drive(params):
 
         # Save results
         xvec, vvec = eqvec[:neq2], eqvec[neq2:]
-        c_sub_en, c_spring_en, c_ekin = np.sum(sub_en(xvec)), np.sum(spring_en(xvec, g, a_c, BC)), np.sum(1/2*vvec**2)
+        c_sub_en, c_spring_en, c_ekin = np.sum(sub_en(xvec)), np.sum(spring_en(xvec, g, a_c, BC, dparams)), np.sum(1/2*vvec**2)
         c_kBT = 2*c_ekin/Np
         xcm, vcm = np.average(xvec), np.average(vvec)
 
@@ -175,7 +180,7 @@ def drive(params):
 
         c_ase = chain2ase(xvec, vvec, mvec)
         c_ase.positions[:,1] = sub_en(xvec) # Use y coord as substrate energy
-        c_ase.positions[:,2] = spring_en(xvec, g, a_c, BC) # Use z coord as spring energy
+        c_ase.positions[:,2] = spring_en(xvec, g, a_c, BC, dparams) # Use z coord as spring energy
         ase_write(trajfname, c_ase, append=True) # XYZ should be able to do append, careful if you change it!
 
         # Print status update
@@ -191,7 +196,7 @@ def drive(params):
 
     # Save LAST STEP
     xvec, vvec = eqvec[:neq2], eqvec[neq2:]
-    c_sub_en, c_spring_en, c_ekin = np.sum(sub_en(xvec)), np.sum(spring_en(xvec, g, a_c, BC)), np.sum(1/2*vvec**2)
+    c_sub_en, c_spring_en, c_ekin = np.sum(sub_en(xvec)), np.sum(spring_en(xvec, g, a_c, BC, dparams)), np.sum(1/2*vvec**2)
     c_kBT = 2*c_ekin/Np
     xcm, vcm = np.average(xvec), np.average(vvec)
 
@@ -200,7 +205,7 @@ def drive(params):
 
     c_ase = chain2ase(xvec, vvec, mvec)
     c_ase.positions[:,1] = sub_en(xvec) # Use y coord as substrate energy
-    c_ase.positions[:,2] = spring_en(xvec, g, a_c, BC) # Use z coord as spring energy
+    c_ase.positions[:,2] = spring_en(xvec, g, a_c, BC, dparams) # Use z coord as spring energy
     ase_write(trajfname, c_ase, append=True) # XYZ should be able to do append, careful if you change it!
     trajstream.close()
 
